@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Mentale - Urbanisme URB 1113 (Séances 1-12)</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: white;
+            color: #667eea;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        button.active {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        #graph-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 1400px;
+            height: 800px;
+            overflow: hidden;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .node {
+            cursor: pointer;
+            stroke-width: 2px;
+        }
+        
+        .node:hover {
+            stroke-width: 3px;
+        }
+        
+        .node text {
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            pointer-events: none;
+            dominant-baseline: central;
+        }
+        
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+            stroke-width: 2px;
+        }
+        
+        .link.hidden {
+            display: none;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            max-width: 300px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        .legend-item {
+            display: inline-block;
+            margin-right: 30px;
+            margin-bottom: 10px;
+        }
+        
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏙️ Carte Mentale Complète - Urbanisme URB 1113</h1>
+        <p>Séances 1 à 12 : Concepts, Théories et Connexions</p>
+    </div>
+    
+    <div class="controls">
+        <button onclick="showAll()">Afficher Tout</button>
+        <button onclick="filterBySeance(1)">Séance 1</button>
+        <button onclick="filterBySeance(2)">Séance 2</button>
+        <button onclick="filterBySeance(3)">Séance 3</button>
+        <button onclick="filterBySeance(4)">Séance 4</button>
+        <button onclick="filterBySeance(5)">Séance 5</button>
+        <button onclick="filterBySeance(6)">Séance 6</button>
+        <button onclick="filterBySeance(7)">Séance 7</button>
+        <button onclick="filterBySeance(8)">Séances 8-9</button>
+        <button onclick="filterBySeance(10)">Séance 10</button>
+        <button onclick="filterBySeance(12)">Séance 12</button>
+        <button onclick="filterByCategory('theories')">Théories</button>
+        <button onclick="filterByCategory('concepts')">Concepts</button>
+        <button onclick="filterByCategory('methodes')">Méthodes</button>
+    </div>
+    
+    <div id="graph-container"></div>
+    
+    <div class="tooltip" id="tooltip"></div>
+    
+    <div class="legend">
+        <h3>Légende</h3>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FF6B6B;"></span>
+            <span>Théories Fondamentales</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #4ECDC4;"></span>
+            <span>Concepts Clés</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #FFE66D;"></span>
+            <span>Méthodes d'Analyse</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #95E1D3;"></span>
+            <span>Applications Pratiques</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #C7CEEA;"></span>
+            <span>Enjeux Contemporains</span>
+        </div>
+    </div>
+    
+    <script>
+        // Données complètes de la carte mentale
+        const data = {
+            nodes: [
+                // Centre
+                { id: "urbanisme", label: "URBANISME\nURB 1113", category: "center", seance: 0, size: 60 },
+                
+                // Séance 1 - Concepts Fondamentaux
+                { id: "s1_intro", label: "Séance 1:\nIntroduction", category: "theories", seance: 1, size: 40 },
+                { id: "echelles", label: "Échelles\nd'Analyse", category: "concepts", seance: 1, size: 35 },
+                { id: "accessibilite", label: "Accessibilité", category: "concepts", seance: 1, size: 35 },
+                { id: "gentrification_s1", label: "Gentrification", category: "concepts", seance: 1, size: 35 },
+                
+                // Séance 2 - École de Chicago
+                { id: "s2_chicago", label: "Séance 2:\nÉcole de Chicago", category: "theories", seance: 2, size: 40 },
+                { id: "burgess", label: "Modèle de Burgess\n(5 zones)", category: "methodes", seance: 2, size: 35 },
+                { id: "invasion_succession", label: "Invasion-\nSuccession", category: "concepts", seance: 2, size: 35 },
+                { id: "ecologie_humaine", label: "Écologie\nHumaine", category: "theories", seance: 2, size: 35 },
+                
+                // Séance 3 - École de Los Angeles
+                { id: "s3_la", label: "Séance 3:\nÉcole de LA", category: "theories", seance: 3, size: 40 },
+                { id: "post_metropole", label: "Post-Métropole", category: "concepts", seance: 3, size: 35 },
+                { id: "kenocapitalisme", label: "Kenocapitalisme", category: "concepts", seance: 3, size: 35 },
+                { id: "redlining", label: "Redlining", category: "concepts", seance: 3, size: 35 },
+                
+                // Séance 4 - Structures Urbaines
+                { id: "s4_structures", label: "Séance 4:\nStructures Urbaines", category: "theories", seance: 4, size: 40 },
+                { id: "edge_city", label: "Edge City", category: "concepts", seance: 4, size: 35 },
+                { id: "automobile", label: "Dépendance\nAutomobile", category: "concepts", seance: 4, size: 35 },
+                { id: "polycentrisme", label: "Polycentrisme", category: "concepts", seance: 4, size: 35 },
+                
+                // Séance 5 - Villes et Réseaux
+                { id: "s5_reseaux", label: "Séance 5:\nVilles et Réseaux", category: "theories", seance: 5, size: 40 },
+                { id: "castells", label: "Castells:\nSociété en Réseaux", category: "theories", seance: 5, size: 35 },
+                { id: "espace_flux", label: "Espace des Flux", category: "concepts", seance: 5, size: 35 },
+                { id: "lussault", label: "Lussault:\nVitesse et Mobilité", category: "theories", seance: 5, size: 35 },
+                
+                // Séance 6 - Modes de Vie
+                { id: "s6_modes", label: "Séance 6:\nModes de Vie", category: "methodes", seance: 6, size: 40 },
+                { id: "motilite", label: "Motilité", category: "concepts", seance: 6, size: 35 },
+                { id: "choix_residentiels", label: "Choix\nRésidentiels", category: "concepts", seance: 6, size: 35 },
+                { id: "espace_action", label: "Espace-Action", category: "concepts", seance: 6, size: 35 },
+                
+                // Séance 7 - Temporalités
+                { id: "s7_temporalites", label: "Séance 7:\nTemporalités Urbaines", category: "methodes", seance: 7, size: 40 },
+                { id: "ville_evenementielle", label: "Ville\nÉvénementielle", category: "concepts", seance: 7, size: 35 },
+                { id: "chrono_urbanisme", label: "Chrono-\nUrbanisme", category: "concepts", seance: 7, size: 35 },
+                { id: "rythmes_urbains", label: "Rythmes\nUrbains", category: "concepts", seance: 7, size: 35 },
+                
+                // Séances 8-9 - Espaces Publics
+                { id: "s8_publics", label: "Séances 8-9:\nEspaces Publics", category: "concepts", seance: 8, size: 40 },
+                { id: "lieu_non_lieu", label: "Lieu vs\nNon-Lieu", category: "concepts", seance: 8, size: 35 },
+                { id: "tiers_lieu", label: "Tiers-Lieu", category: "concepts", seance: 8, size: 35 },
+                { id: "privatisation", label: "Privatisation\ndes Espaces", category: "concepts", seance: 8, size: 35 },
+                { id: "genre_espace", label: "Genre et\nEspace", category: "concepts", seance: 8, size: 35 },
+                
+                // Séance 10 - Ségrégation
+                { id: "s10_segregation", label: "Séance 10:\nSégrégation", category: "theories", seance: 10, size: 40 },
+                { id: "pauvrete", label: "Pauvreté et\nCapital", category: "concepts", seance: 10, size: 35 },
+                { id: "exclusion", label: "Exclusion\nSociale", category: "concepts", seance: 10, size: 35 },
+                { id: "justice_spatiale", label: "Justice\nSpatiale", category: "concepts", seance: 10, size: 35 },
+                { id: "mixite_sociale", label: "Mixité\nSociale", category: "concepts", seance: 10, size: 35 },
+                
+                // Séance 12 - Gentrification
+                { id: "s12_gentrification", label: "Séance 12:\nGentrification", category: "theories", seance: 12, size: 40 },
+                { id: "rent_gap", label: "Écart de Rente\n(Rent Gap)", category: "methodes", seance: 12, size: 35 },
+                { id: "valeur_fonciere", label: "Valeur\nFoncière", category: "concepts", seance: 12, size: 35 },
+                { id: "gentrificateurs", label: "Gentrificateurs\nMarginaux", category: "concepts", seance: 12, size: 35 },
+                { id: "upgrading_place", label: "Upgrading\nin Place", category: "concepts", seance: 12, size: 35 },
+                { id: "eco_gentrification", label: "Éco-\nGentrification", category: "concepts", seance: 12, size: 35 },
+                { id: "financiarisation", label: "Financiarisation\ndu Logement", category: "concepts", seance: 12, size: 35 },
+                
+                // Concepts Transversaux
+                { id: "mobilite", label: "Mobilité\nUrbaine", category: "concepts", seance: 0, size: 35 },
+                { id: "segregation_spatiale", label: "Ségrégation\nSpatiale", category: "concepts", seance: 0, size: 35 },
+                { id: "inegalites", label: "Inégalités\nUrbaines", category: "concepts", seance: 0, size: 35 },
+                { id: "planification", label: "Planification\nUrbaine", category: "methodes", seance: 0, size: 35 },
+                { id: "politiques_urbaines", label: "Politiques\nUrbaines", category: "methodes", seance: 0, size: 35 },
+                { id: "marche_immobilier", label: "Marché\nImmobilier", category: "concepts", seance: 0, size: 35 },
+            ],
+            links: [
+                // Connexions du centre
+                { source: "urbanisme", target: "s1_intro" },
+                { source: "urbanisme", target: "s2_chicago" },
+                { source: "urbanisme", target: "s3_la" },
+                { source: "urbanisme", target: "s4_structures" },
+                { source: "urbanisme", target: "s5_reseaux" },
+                { source: "urbanisme", target: "s6_modes" },
+                { source: "urbanisme", target: "s7_temporalites" },
+                { source: "urbanisme", target: "s8_publics" },
+                { source: "urbanisme", target: "s10_segregation" },
+                { source: "urbanisme", target: "s12_gentrification" },
+                
+                // Séance 1
+                { source: "s1_intro", target: "echelles" },
+                { source: "s1_intro", target: "accessibilite" },
+                { source: "s1_intro", target: "gentrification_s1" },
+                
+                // Séance 2
+                { source: "s2_chicago", target: "burgess" },
+                { source: "s2_chicago", target: "invasion_succession" },
+                { source: "s2_chicago", target: "ecologie_humaine" },
+                { source: "burgess", target: "segregation_spatiale" },
+                { source: "invasion_succession", target: "mobilite" },
+                
+                // Séance 3
+                { source: "s3_la", target: "post_metropole" },
+                { source: "s3_la", target: "kenocapitalisme" },
+                { source: "s3_la", target: "redlining" },
+                { source: "redlining", target: "segregation_spatiale" },
+                
+                // Séance 4
+                { source: "s4_structures", target: "edge_city" },
+                { source: "s4_structures", target: "automobile" },
+                { source: "s4_structures", target: "polycentrisme" },
+                { source: "automobile", target: "mobilite" },
+                { source: "edge_city", target: "marche_immobilier" },
+                
+                // Séance 5
+                { source: "s5_reseaux", target: "castells" },
+                { source: "s5_reseaux", target: "espace_flux" },
+                { source: "s5_reseaux", target: "lussault" },
+                { source: "castells", target: "mobilite" },
+                { source: "lussault", target: "mobilite" },
+                
+                // Séance 6
+                { source: "s6_modes", target: "motilite" },
+                { source: "s6_modes", target: "choix_residentiels" },
+                { source: "s6_modes", target: "espace_action" },
+                { source: "motilite", target: "mobilite" },
+                { source: "choix_residentiels", target: "marche_immobilier" },
+                
+                // Séance 7
+                { source: "s7_temporalites", target: "ville_evenementielle" },
+                { source: "s7_temporalites", target: "chrono_urbanisme" },
+                { source: "s7_temporalites", target: "rythmes_urbains" },
+                
+                // Séances 8-9
+                { source: "s8_publics", target: "lieu_non_lieu" },
+                { source: "s8_publics", target: "tiers_lieu" },
+                { source: "s8_publics", target: "privatisation" },
+                { source: "s8_publics", target: "genre_espace" },
+                { source: "privatisation", target: "inegalites" },
+                
+                // Séance 10
+                { source: "s10_segregation", target: "pauvrete" },
+                { source: "s10_segregation", target: "exclusion" },
+                { source: "s10_segregation", target: "justice_spatiale" },
+                { source: "s10_segregation", target: "mixite_sociale" },
+                { source: "pauvrete", target: "inegalites" },
+                { source: "exclusion", target: "segregation_spatiale" },
+                
+                // Séance 12
+                { source: "s12_gentrification", target: "rent_gap" },
+                { source: "s12_gentrification", target: "valeur_fonciere" },
+                { source: "s12_gentrification", target: "gentrificateurs" },
+                { source: "s12_gentrification", target: "upgrading_place" },
+                { source: "s12_gentrification", target: "eco_gentrification" },
+                { source: "s12_gentrification", target: "financiarisation" },
+                { source: "rent_gap", target: "marche_immobilier" },
+                { source: "valeur_fonciere", target: "marche_immobilier" },
+                { source: "gentrification_s1", target: "s12_gentrification" },
+                
+                // Connexions transversales
+                { source: "segregation_spatiale", target: "inegalites" },
+                { source: "marche_immobilier", target: "politiques_urbaines" },
+                { source: "planification", target: "politiques_urbaines" },
+                { source: "politiques_urbaines", target: "justice_spatiale" },
+                { source: "mobilite", target: "espace_action" },
+            ]
+        };
+        
+        // Couleurs par catégorie
+        const colors = {
+            center: "#FF1744",
+            theories: "#FF6B6B",
+            concepts: "#4ECDC4",
+            methodes: "#FFE66D",
+            applications: "#95E1D3",
+            issues: "#C7CEEA"
+        };
+        
+        let currentFilter = null;
+        
+        // Initialiser le graphe
+        function initGraph() {
+            const width = document.getElementById('graph-container').clientWidth;
+            const height = document.getElementById('graph-container').clientHeight;
+            
+            const svg = d3.select("#graph-container").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+            
+            const simulation = d3.forceSimulation(data.nodes)
+                .force("link", d3.forceLink(data.links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collision", d3.forceCollide().radius(d => d.size + 10));
+            
+            const links = svg.selectAll(".link")
+                .data(data.links)
+                .enter()
+                .append("line")
+                .attr("class", "link")
+                .attr("stroke-width", 2);
+            
+            const nodes = svg.selectAll(".node")
+                .data(data.nodes)
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+            
+            nodes.append("circle")
+                .attr("r", d => d.size)
+                .attr("fill", d => colors[d.category] || colors.concepts)
+                .attr("stroke", "#333")
+                .on("mouseover", function(event, d) {
+                    showTooltip(event, d);
+                })
+                .on("mouseout", hideTooltip);
+            
+            nodes.append("text")
+                .text(d => d.label)
+                .attr("font-size", d => Math.max(10, d.size / 2.5))
+                .attr("fill", "#fff")
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "central");
+            
+            simulation.on("tick", () => {
+                links
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                
+                nodes.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+            
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+        
+        function showTooltip(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `<strong>${d.label}</strong><br/>Séance: ${d.seance || 'Transversal'}`;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY + 10) + 'px';
+        }
+        
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+        
+        function showAll() {
+            currentFilter = null;
+            updateDisplay();
+        }
+        
+        function filterBySeance(seance) {
+            currentFilter = { type: 'seance', value: seance };
+            updateDisplay();
+        }
+        
+        function filterByCategory(category) {
+            currentFilter = { type: 'category', value: category };
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            d3.selectAll(".node").style("opacity", d => {
+                if (!currentFilter) return 1;
+                if (currentFilter.type === 'seance') {
+                    return (d.seance === currentFilter.value || d.seance === 0) ? 1 : 0.2;
+                } else if (currentFilter.type === 'category') {
+                    return d.category === currentFilter.value ? 1 : 0.2;
+                }
+                return 1;
+            });
+            
+            d3.selectAll(".link").style("opacity", d => {
+                if (!currentFilter) return 0.6;
+                if (currentFilter.type === 'seance') {
+                    return ((d.source.seance === currentFilter.value || d.source.seance === 0) &&
+                            (d.target.seance === currentFilter.value || d.target.seance === 0)) ? 0.6 : 0.1;
+                } else if (currentFilter.type === 'category') {
+                    return (d.source.category === currentFilter.value && d.target.category === currentFilter.value) ? 0.6 : 0.1;
+                }
+                return 0.6;
+            });
+        }
+        
+        // Initialiser
+        initGraph();
+    </script>
+</body>
+</html>
